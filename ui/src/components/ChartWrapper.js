@@ -1,7 +1,8 @@
 // Dependencies
 
 import React, { Component } from 'react'
-import * as Chart from 'react-d3';
+import * as Chart from 'react-d3'
+import D3 from 'd3'
 
 let count = 0
 
@@ -161,7 +162,8 @@ export default class ChartWrapper extends Component {
     const { chartType, fieldType, width, height, title, xField, yField, group } = this.state;
 
     if (chartType == 'bar') {
-      return (<Chart.BarChart
+      return (
+      <Chart.BarChart
         data={this.state[fieldType] || [{values:[{x:0,y:0}]}]}
         width={width}
         height={height}
@@ -183,63 +185,72 @@ export default class ChartWrapper extends Component {
         }}
       />)
     } else if (chartType == 'line') {
-      return (<Chart.LineChart
-        legend={(group != null)}
-        data={this.state[fieldType] || [{values:[{x:0,y:0}]}]}
-        viewBoxObject={{
-          x: 0,
-          y: 0,
-          width,
-          height,
-        }}
-        width={width}
-        height={height}
-        yAxisLabel={yField}
-        xAxisLabel={xField}
-        xAxisFormatter={(d) => {
-          if (count % 5 == 0) {
-            count++
-            if (this.state.xField == 'timestamp') {
-              let date = new Date(d)
-              return `${date.toDateString().slice(4,7)}\n${date.getDate()} ${date.getHours()}`
+      return (
+        <Chart.LineChart
+          legend={(group != null)}
+          data={this.state[fieldType] || [{values:[{x:0,y:0}]}]}
+          viewBoxObject={{
+            x: 0,
+            y: 0,
+            width,
+            height,
+          }}
+          width={width}
+          height={height}
+          yAxisLabel={yField}
+          xAxisLabel={xField}
+          xAxisFormatter={(d) => {
+            if (count % 5 == 0) {
+              count++
+              if (this.state.xField == 'timestamp') {
+                let date = new Date(d)
+                return `${date.toDateString().slice(4,7)}\n${date.getDate()} ${date.getHours()}`
+              } else {
+                return d
+              }
             } else {
-              return d
+              count++
+              return ''
             }
-          } else {
-            count++
-            return ''
-          }
-        }}
-      />)
+          }}
+        />)
     } else if (chartType == 'area') {
-      return (<Chart.AreaChart
-        legend={(group != null)}
-        data={this.state[fieldType] || [{values:[{x:0,y:0}]}]}
-        viewBoxObject={{
-          x: 0,
-          y: 0,
-          width,
-          height,
-        }}
-        width={width}
-        height={height}
-        yAxisLabel={yField}
-        xAxisLabel={xField}
-        xAxisFormatter={(d) => {
-          if (count % 5 == 0) {
-            count++
-            if (this.state.xField == 'timestamp') {
-              let date = new Date(d)
-              return `${date.toDateString().slice(4,7)}\n${date.getDate()} ${date.getHours()}`
+      let color = null
+      if (this.state.groups) {
+        color = d3.scale.ordinal()
+                              .domain(Object.keys(this.state.groups))
+                              .range(["#FF0000", "#009933" , "#0000FF"])
+      }
+      return (
+        <Chart.AreaChart
+          color={color}
+          legend={(group != null)}
+          data={this.state[fieldType] || [{values:[{x:0,y:0}]}]}
+          viewBoxObject={{
+            x: 0,
+            y: 0,
+            width,
+            height,
+          }}
+          width={width}
+          height={height}
+          yAxisLabel={yField}
+          xAxisLabel={xField}
+          xAxisFormatter={(d) => {
+            if (count % 5 == 0) {
+              count++
+              if (this.state.xField == 'timestamp') {
+                let date = new Date(d)
+                return `${date.toDateString().slice(4,7)}\n${date.getDate()} ${date.getHours()}`
+              } else {
+                return d
+              }
             } else {
-              return d
+              count++
+              return ''
             }
-          } else {
-            count++
-            return ''
-          }
-        }}
-      />)
+          }}
+        />)
     } else {
       return (<div></div>)
     }
