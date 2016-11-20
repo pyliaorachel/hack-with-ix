@@ -110,7 +110,9 @@ export default class ChartWrapper extends Component {
   refreshData() {
     let title = ''
     Object.keys(this.state.params).forEach((key) => {
-      title += `${this.state.params[key]} `
+      if (key == 'dc' || key == 'id') {
+        title += `${this.state.params[key]} `        
+      }
     })
     this.setState({title})
   }

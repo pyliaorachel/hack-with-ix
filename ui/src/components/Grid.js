@@ -31,7 +31,7 @@ export default class Grid extends Component {
       chartProperties: props.chartProperties,
       layout,
       chartWidth: document.documentElement.clientWidth/4-16,
-      interval: 1000,
+      interval: 700,
     }
   }
 
