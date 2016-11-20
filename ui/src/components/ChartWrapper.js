@@ -26,7 +26,9 @@ const defaultOptions = {
 const styles = {
   wrapperStyle: {
     backgroundColor: '#FFC107',
-    padding: 20,
+    paddingLeft: 20,
+    paddingRight: 20,
+    paddingTop: 20,
   },
   titleStyle: {
     display: `flex`,
@@ -42,6 +44,8 @@ export default class ChartWrapper extends Component {
 
     this.state = {
       title: props.title || 'MyChart',
+      width: props.width || 600,
+      height: props.height || 250,
       data: [],
       timestamp_lag: null,
       timestamp_requests: null,
@@ -118,7 +122,10 @@ export default class ChartWrapper extends Component {
     for (let i = range[0]; i < range[1]; i++) {
       if (i % 10 == 0) {
         let date = new Date(allData[i][xField])
-        labels.push(date.toDateString())
+        const month = date.toDateString().slice(4,7)
+        const day = date.getDate()
+        const hour = date.getHours()
+        labels.push(`${month} ${day}, ${hour}`)
       } else {
         labels.push('')
       }
@@ -162,12 +169,12 @@ export default class ChartWrapper extends Component {
 
   getChartComponent() {
     console.log("getChartComponent ...")
-    const { chartType, options, fieldType } = this.state;
+    const { chartType, options, fieldType, width, height } = this.state;
 
     if (chartType == 'bar') {
-      return (<Chart.Bar data={this.state[fieldType] || defaultData} options={options} width="600" height="250"/>)
+      return (<Chart.Bar data={this.state[fieldType] || defaultData} options={options} width={width} height={height}/>)
     } else if (chartType == 'line') {
-      return (<Chart.Line data={this.state[fieldType] || defaultData} options={options} width="600" height="250"/>)
+      return (<Chart.Line data={this.state[fieldType] || defaultData} options={options} width={width} height={height}/>)
     } else {
       return (<div></div>)
     }
