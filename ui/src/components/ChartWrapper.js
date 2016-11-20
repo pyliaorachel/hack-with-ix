@@ -1,17 +1,9 @@
 // Dependencies
 
 import React, { Component } from 'react'
-import * as Chart from 'react-chartjs'
+import * as Chart from 'react-d3';
 
-const defaultData = {
-    labels: [""],
-    datasets: [
-        {
-            label: "",
-            data: [],
-        }
-    ]
-}
+const defaultData = []
 
 const defaultOptions = {
   animation: false,
@@ -46,7 +38,7 @@ export default class ChartWrapper extends Component {
       title: props.title || 'MyChart',
       width: props.width || 600,
       height: props.height || 250,
-      data: [],
+      data: null,
       timestamp_lag: null,
       timestamp_requests: null,
       timestamp_mean: null,
@@ -118,29 +110,19 @@ export default class ChartWrapper extends Component {
 
     filter.range = range
 
-    let labels = []
+    let values = []
     for (let i = range[0]; i < range[1]; i++) {
-      if (i % 10 == 0) {
-        let date = new Date(allData[i][xField])
-        const month = date.toDateString().slice(4,7)
-        const day = date.getDate()
-        const hour = date.getHours()
-        labels.push(`${month} ${day}, ${hour}`)
-      } else {
-        labels.push('')
+      let v = {
+        x: allData[i][xField],
+        y: allData[i][yField],
       }
+      values.push(v)
     }
 
-    let data = []
-    for (let i = range[0]; i < range[1]; i++) {
-      data.push(allData[i][yField])
-    }
-
-    let chartObj = this.state[`${xField}_${yField}`]
-    chartObj.datasets[0].data = data
-    chartObj.labels = labels
+    let chartArr = this.state[`${xField}_${yField}`]
+    chartArr[0].values = values
     let stateObj = {}
-    stateObj[`${xField}_${yField}`] = chartObj
+    stateObj[`${xField}_${yField}`] = chartArr
     stateObj.filter = filter
     this.setState(stateObj)
   }
@@ -150,15 +132,7 @@ export default class ChartWrapper extends Component {
     const allData = this.state.data
     const { xField, yField } = this.state
 
-    let chartTemplate = {
-      labels: [""],
-      datasets: [
-        {
-          data: [],
-          label: `${xField}_${yField}`,
-        }
-      ]
-    }
+    let chartTemplate = [{values:[{x:0,y:0}]}]
 
     let stateObj = {}
     stateObj[`${xField}_${yField}`] = chartTemplate
@@ -169,12 +143,32 @@ export default class ChartWrapper extends Component {
 
   getChartComponent() {
     console.log("getChartComponent ...")
-    const { chartType, options, fieldType, width, height } = this.state;
+    const { chartType, options, fieldType, width, height, title, xField, yField } = this.state;
 
     if (chartType == 'bar') {
-      return (<Chart.Bar data={this.state[fieldType] || defaultData} options={options} width={width} height={height}/>)
+      return (<Chart.BarChart
+        data={this.state[fieldType] || [{values:[{x:0,y:0}]}]}
+        width={width}
+        height={height}
+        title={title}
+        yAxisLabel={yField}
+        xAxisLabel={xField}
+      />)
     } else if (chartType == 'line') {
-      return (<Chart.Line data={this.state[fieldType] || defaultData} options={options} width={width} height={height}/>)
+      return (<Chart.LineChart
+        data={this.state[fieldType] || [{values:[{x:0,y:0}]}]}
+        viewBoxObject={{
+          x: 0,
+          y: 0,
+          width,
+          height,
+        }}
+        width={width}
+        height={height}
+        title={title}
+        yAxisLabel={yField}
+        xAxisLabel={xField}
+      />)
     } else {
       return (<div></div>)
     }
