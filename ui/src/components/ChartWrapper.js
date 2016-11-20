@@ -5,22 +5,19 @@ import * as Chart from 'react-d3-basic'
 import D3 from 'd3'
 import * as Color from 'style/colors'
 
-let count = 0
-
 const defaultData = []
 
 const styles = {
   wrapperStyle: {
-    backgroundColor: '#FFC107',
-    paddingLeft: 20,
-    paddingRight: 20,
-    paddingTop: 20,
+    backgroundColor: Color.bg,
+    padding: 8
   },
   titleStyle: {
     display: `flex`,
     justifyContent: `center`,
-    fontFamily: 'Cabin',
-    color: 'white',
+    fontFamily: 'Oswald',
+    color: Color.title,
+    fontSize: 26
   }
 }
 
@@ -30,8 +27,8 @@ export default class ChartWrapper extends Component {
 
     this.state = {
       title: props.title || `${props.xField} X ${props.yField}`,
-      width: props.width || 600,
-      height: props.height || 250,
+      width: props.width || 200,
+      height: props.height || 200,
       data: null,
       dataType: props.dataType || null,
       xField: props.xField || null,
@@ -144,10 +141,13 @@ export default class ChartWrapper extends Component {
 
     // basic chart series template
     let chartTemplate = []
-    Object.keys(allKeys).forEach((key) => {
+    Object.keys(allKeys).forEach((key,i) => {
+      const color = D3.rgb(Color.line).darker(i*0.5)
+      console.log('color', color)
       chartTemplate.push({
         name: key,
         field: key,
+        color,
       })
     })
 
@@ -160,6 +160,9 @@ export default class ChartWrapper extends Component {
       // } else {
       //   return v[xField]
       // }
+      // let parseDate = D3.time.format("%b%d %H:%M").parse
+      // let formatDate = D3.time.format("%b%d %H:%M")
+
       return v[xField]
     }
 
@@ -175,18 +178,24 @@ export default class ChartWrapper extends Component {
   getChartComponent() {
     console.log("getChartComponent ...", this.state.chartSeries)
     const { chartType, chartData, chartSeries, width, height, title, xField, yField, group, xFunc } = this.state;
+    const xScale = (xField == 'timestamp') ? 'time' : 'linear'
 
     if (chartType == 'bar') {
       return (
-      <Chart.BarChart
-        legend={(group != null)}
-        data={chartData}
-        chartSeries={chartSeries}
-        width={width}
-        height={height}
-        x={xFunc}
-        xScale='ordinal'
-      />)
+        <Chart.BarChart
+          legend={(group != null)}
+          data={chartData}
+          chartSeries={chartSeries}
+          width={width}
+          height={height}
+          x={xFunc}
+          xScale='ordinal'
+          xLabel={xField}
+          yLabel={yField}
+          showXGrid={false}
+          showYGrid={false}
+          yTickFormat={D3.format(".2s")}
+        />)
     } else if (chartType == 'line') {
       return (
         <Chart.LineChart
@@ -196,7 +205,12 @@ export default class ChartWrapper extends Component {
           width={width}
           height={height}
           x={xFunc}
-          xScale='time'
+          xScale={xScale}
+          xLabel={xField}
+          yLabel={yField}
+          showXGrid={false}
+          showYGrid={false}
+          yTickFormat={D3.format(".2s")}
         />)
     } else if (chartType == 'area') {
       return (
@@ -206,8 +220,14 @@ export default class ChartWrapper extends Component {
           chartSeries={chartSeries}
           width={width}
           height={height}
+          margins={{ top: 40, right: 50, bottom: 40, left: 50 }}
           x={xFunc}
-          xScale='time'
+          xScale={xScale}
+          xLabel={xField}
+          yLabel={yField}
+          showXGrid={false}
+          showYGrid={false}
+          yTickFormat={D3.format(".2s")}
         />)
     } else {
       return (<div></div>)

@@ -1,0 +1,9 @@
+.react-d3-core__legend {
+  background-color: transparent !important;
+}
+.react-grid-layout {
+  margin: 0;
+}
+svg text {
+  color: #394e52;
+}
