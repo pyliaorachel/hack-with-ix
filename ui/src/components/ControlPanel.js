@@ -7,6 +7,8 @@ import { Navbar, NavDropdown, Nav, MenuItem, Tab, NavItem } from 'react-bootstra
 // Components
 
 import { Center, Col, Row } from 'components/Flex'
+import * as Color from 'style/colors'
+const icon = require("file!../assets/icon.png")
 
 class NavBar extends Component {
   constructor() {
@@ -87,7 +89,9 @@ class NavBar extends Component {
       <Navbar>
         <Navbar.Header>
           <Navbar.Brand>
-            <a href="#">UBoard</a>
+            <a href="#" style={{color: Color.line, padding: 10}}>
+              <img src={icon} width={30} height={30} style={{display: 'inline-block', marginRight: 5}}/>UBoard
+            </a>
           </Navbar.Brand>
         </Navbar.Header>
         <Nav>
