@@ -8,35 +8,31 @@ const defaultData = {
     datasets: [
         {
             label: "",
-            fill: false,
-            lineTension: 0.1,
-            backgroundColor: "rgba(75,192,192,0.4)",
-            borderColor: "rgba(75,192,192,1)",
-            borderCapStyle: 'butt',
-            borderDash: [],
-            borderDashOffset: 0.0,
-            borderJoinStyle: 'miter',
-            pointBorderColor: "rgba(75,192,192,1)",
-            pointBackgroundColor: "#fff",
-            pointBorderWidth: 1,
-            pointHoverRadius: 5,
-            pointHoverBackgroundColor: "rgba(75,192,192,1)",
-            pointHoverBorderColor: "rgba(220,220,220,1)",
-            pointHoverBorderWidth: 2,
-            pointRadius: 1,
-            pointHitRadius: 10,
             data: [],
-            spanGaps: false,
         }
     ]
 }
 
 const defaultOptions = {
-  elements: {
-    points: {
-      borderWidth: 1,
-      borderColor: 'rgb(0, 0, 0)'
-    }
+  animation: false,
+  scaleShowGridLines: false,
+  pointDot: true,
+  pointDotRadius: 1,
+  datasetStroke: true,
+  datasetStrokeWidth: 2,
+  datasetFill: false,
+}
+
+const styles = {
+  wrapperStyle: {
+    backgroundColor: '#FFC107',
+    padding: 20,
+  },
+  titleStyle: {
+    display: `flex`,
+    justifyContent: `center`,
+    fontFamily: 'Cabin',
+    color: 'white',
   }
 }
 
@@ -45,6 +41,7 @@ export default class ChartWrapper extends Component {
     super(props)
 
     this.state = {
+      title: props.title || 'MyChart',
       data: [],
       timestamp_lag: null,
       timestamp_requests: null,
@@ -98,7 +95,7 @@ export default class ChartWrapper extends Component {
 
       if (this.state.interval != 0) {
         const intervalId = setInterval(() => {
-          console.log('setintervalId ...')
+          console.log('setinterval ...')
           this.updateData()
         }, this.state.interval)
         this.setState({intervalId})
@@ -108,52 +105,17 @@ export default class ChartWrapper extends Component {
   }
 
   updateData(){
+    const allData = this.state.data
+    const { xField, yField, filter } = this.state
     let range = this.state.filter.range
-    let filter = this.state.filter
 
     range[0] += 1
     range[1] += 1
 
     filter.range = range
-    this.setState({filter})
-
-    this.parseData(this.state.xField, this.state.yField, this.state.filter)
-  }
-
-  parseData(xField, yField, filter){
-    console.log("Parsing data...", xField, yField)
-    const allData = this.state.data
-
-    let chartTemplate = {
-      labels: [""],
-      datasets: [
-        {
-          label: `${xField}_${yField}`,
-          fill: false,
-          lineTension: 0.1,
-          backgroundColor: "rgba(75,192,192,0.4)",
-          borderColor: "rgba(75,192,192,1)",
-          borderCapStyle: 'butt',
-          borderDash: [],
-          borderDashOffset: 0.0,
-          borderJoinStyle: 'miter',
-          pointBorderColor: "rgba(75,192,192,1)",
-          pointBackgroundColor: "#fff",
-          pointBorderWidth: 1,
-          pointHoverRadius: 5,
-          pointHoverBackgroundColor: "rgba(75,192,192,1)",
-          pointHoverBorderColor: "rgba(220,220,220,1)",
-          pointHoverBorderWidth: 2,
-          pointRadius: 1,
-          pointHitRadius: 10,
-          data: [],
-          spanGaps: false,
-        }
-      ]
-    }
 
     let labels = []
-    for (let i = filter.range[0]; i < filter.range[1]; i++) {
+    for (let i = range[0]; i < range[1]; i++) {
       if (i % 10 == 0) {
         let date = new Date(allData[i][xField])
         labels.push(date.toDateString())
@@ -163,16 +125,39 @@ export default class ChartWrapper extends Component {
     }
 
     let data = []
-    for (let i = filter.range[0]; i < filter.range[1]; i++) {
+    for (let i = range[0]; i < range[1]; i++) {
       data.push(allData[i][yField])
     }
 
-    chartTemplate.datasets[0].data = data
-    chartTemplate.labels = labels
+    let chartObj = this.state[`${xField}_${yField}`]
+    chartObj.datasets[0].data = data
+    chartObj.labels = labels
+    let stateObj = {}
+    stateObj[`${xField}_${yField}`] = chartObj
+    stateObj.filter = filter
+    this.setState(stateObj)
+  }
+
+  parseData(){
+    console.log("Parsing data...")
+    const allData = this.state.data
+    const { xField, yField } = this.state
+
+    let chartTemplate = {
+      labels: [""],
+      datasets: [
+        {
+          data: [],
+          label: `${xField}_${yField}`,
+        }
+      ]
+    }
 
     let stateObj = {}
     stateObj[`${xField}_${yField}`] = chartTemplate
     this.setState(stateObj)
+
+    this.updateData()
   }
 
   getChartComponent() {
@@ -190,7 +175,8 @@ export default class ChartWrapper extends Component {
 
   render () {
     return (
-      <div>
+      <div style={styles.wrapperStyle}>
+        <h1 style={styles.titleStyle}>{this.state.title}</h1>
         {this.getChartComponent()}
       </div>
     )
