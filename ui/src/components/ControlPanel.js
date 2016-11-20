@@ -24,7 +24,7 @@ class NavBar extends Component {
       dataType: 'performance',
       xFields: ['timestamp'],
       xField: 'timestamp',
-      yFields: ['impressions', 'spend', 'requests', 'lag', 'warn'],
+      yFields: ['impressions', 'spend', 'requests', 'lag', 'warns'],
       yField: 'lag',
       chartTypes: ['line', 'area', 'bar'],
       chartType: 'line',
