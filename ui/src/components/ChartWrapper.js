@@ -1,10 +1,13 @@
 // Dependencies
 
 import React, { Component } from 'react'
-import * as Chart from 'react-d3'
+import * as Chart from 'react-d3-basic'
 import D3 from 'd3'
+import * as Color from 'style/colors'
 
 let count = 0
+
+const defaultData = []
 
 const styles = {
   wrapperStyle: {
@@ -26,17 +29,13 @@ export default class ChartWrapper extends Component {
     super(props)
 
     this.state = {
-      title: props.title || `${props.xField}X${props.yField}`,
+      title: props.title || `${props.xField} X ${props.yField}`,
       width: props.width || 600,
       height: props.height || 250,
       data: null,
-      timestamp_lag: null,
-      timestamp_requests: null,
-      timestamp_mean: null,
       dataType: props.dataType || null,
       xField: props.xField || null,
       yField: props.yField || null,
-      fieldType: `${props.xField}_${props.yField}`,
       params: props.params || null,
       chartType: props.chartType || null,
       filter: props.filter || null,
@@ -44,12 +43,16 @@ export default class ChartWrapper extends Component {
       interval: props.interval || 0,
       group: props.group || null,
       groups: null,
+      chartData: [],
+      chartSeries: [{data:[]}],
+      xFunc: ()=>{},
     }
+    console.log(Color)
   }
 
   componentWillMount() {
     console.log("componentWillMount ...")
-    const { dataType, params, fieldType } = this.state;
+    const { params } = this.state;
 
     this.fetchData(params)
   }
@@ -63,7 +66,7 @@ export default class ChartWrapper extends Component {
   }
 
   fetchData(params){
-    console.log("Fetching data ...", this.state.dataType)
+    console.log("Fetching data ...")
     const dataType = this.state.dataType
 
     // parse url
@@ -79,7 +82,7 @@ export default class ChartWrapper extends Component {
     .then(res => res.json())
     .then(json => {
       this.setState({ data: json.data})
-      this.parseData(this.state.xField, this.state.yField, this.state.filter)
+      this.parseData()
 
       if (this.state.interval != 0) {
         const intervalId = setInterval(() => {
@@ -95,7 +98,7 @@ export default class ChartWrapper extends Component {
   updateData(){
     console.log("Update data ...")
     const groupData = this.state.groups
-    const { xField, yField, filter } = this.state
+    const { filter } = this.state
     let range = this.state.filter.range
 
     range[0] += 5
@@ -103,23 +106,14 @@ export default class ChartWrapper extends Component {
 
     filter.range = range
 
-    let chartArr = this.state[`${xField}_${yField}`]
-    Object.keys(groupData).forEach((key,i) => {
-      const group = groupData[key]
-
-      let values = []
-      for (let i = range[0]; i < range[1]; i++) {
-        let v = {
-          x: group[i][xField],
-          y: group[i][yField],
-        }
-        values.push(v)
-      }
-      chartArr[i].values = values
-    })
+    let chartData = []
+    for (let i = range[0]; i < range[1]; i++) {
+      let v = groupData[i]
+      chartData.push(v)
+    }
 
     let stateObj = {}
-    stateObj[`${xField}_${yField}`] = chartArr
+    stateObj.chartData = chartData
     stateObj.filter = filter
     this.setState(stateObj)
   }
@@ -131,125 +125,89 @@ export default class ChartWrapper extends Component {
 
     // form group
     let allGroups = {}
+    let allKeys = {}
     if (group != null) {
+      let tempGroups = {}
       allData.forEach((item) => {
-        allGroups[item[group]] = (allGroups[item[group]] == null) ? [] : allGroups[item[group]]
-        allGroups[item[group]].push(item)
+        allKeys[item[group]] = true
+        tempGroups[item[xField]] = (tempGroups[item[xField]] == null) ? {} : tempGroups[item[xField]]
+        let obj = {}
+        obj[item[group]] = item[yField] + (tempGroups[item[xField]] && tempGroups[item[xField]][item[group]] ? tempGroups[item[xField]][item[group]] : 0)
+        obj[xField] = item[xField]
+        tempGroups[item[xField]] = Object.assign(tempGroups[item[xField]], obj)
       })
+      allGroups = Object.values(tempGroups)
     } else {
-      allGroups[yField] = allData
+      allGroups = allData
+      allKeys[yField] = true
     }
 
-    // basic chart template
+    // basic chart series template
     let chartTemplate = []
-    Object.keys(allGroups).forEach((key) => {
+    Object.keys(allKeys).forEach((key) => {
       chartTemplate.push({
         name: key,
-        values:[{x:0,y:0}]
+        field: key,
       })
     })
 
+    // x function
+    const x = (v) => {
+      const xField = this.state.xField
+      // if (xField == 'timestamp') {
+      //   let date = new Date(v[xField])
+      //   return `${date.toDateString().slice(4,7)} ${date.getDate()} ${date.getHours()}`
+      // } else {
+      //   return v[xField]
+      // }
+      return v[xField]
+    }
+
     let stateObj = {}
-    stateObj[`${xField}_${yField}`] = chartTemplate
+    stateObj.chartSeries = chartTemplate
     stateObj.groups = allGroups
+    stateObj.xFunc = x
     this.setState(stateObj)
 
     this.updateData()
   }
 
   getChartComponent() {
-    console.log("getChartComponent ...")
-    const { chartType, fieldType, width, height, title, xField, yField, group } = this.state;
+    console.log("getChartComponent ...", this.state.chartSeries)
+    const { chartType, chartData, chartSeries, width, height, title, xField, yField, group, xFunc } = this.state;
 
     if (chartType == 'bar') {
       return (
       <Chart.BarChart
-        data={this.state[fieldType] || [{values:[{x:0,y:0}]}]}
+        legend={(group != null)}
+        data={chartData}
+        chartSeries={chartSeries}
         width={width}
         height={height}
-        yAxisLabel={yField}
-        xAxisLabel={xField}
-        xAxisFormatter={(d) => {
-          if (count % 10 == 0) {
-            count++
-            if (this.state.xField == 'timestamp') {
-              let date = new Date(d)
-              return `${date.toDateString().slice(4,7)} ${date.getDate()} ${date.getHours()}`
-            } else {
-              return d
-            }
-          } else {
-            count++
-            return ''
-          }
-        }}
+        x={xFunc}
+        xScale='ordinal'
       />)
     } else if (chartType == 'line') {
       return (
         <Chart.LineChart
           legend={(group != null)}
-          data={this.state[fieldType] || [{values:[{x:0,y:0}]}]}
-          viewBoxObject={{
-            x: 0,
-            y: 0,
-            width,
-            height,
-          }}
+          data={chartData}
+          chartSeries={chartSeries}
           width={width}
           height={height}
-          yAxisLabel={yField}
-          xAxisLabel={xField}
-          xAxisFormatter={(d) => {
-            if (count % 5 == 0) {
-              count++
-              if (this.state.xField == 'timestamp') {
-                let date = new Date(d)
-                return `${date.toDateString().slice(4,7)}\n${date.getDate()} ${date.getHours()}`
-              } else {
-                return d
-              }
-            } else {
-              count++
-              return ''
-            }
-          }}
+          x={xFunc}
+          xScale='time'
         />)
     } else if (chartType == 'area') {
-      let color = null
-      if (this.state.groups) {
-        color = d3.scale.ordinal()
-                              .domain(Object.keys(this.state.groups))
-                              .range(["#FF0000", "#009933" , "#0000FF"])
-      }
       return (
         <Chart.AreaChart
-          color={color}
           legend={(group != null)}
-          data={this.state[fieldType] || [{values:[{x:0,y:0}]}]}
-          viewBoxObject={{
-            x: 0,
-            y: 0,
-            width,
-            height,
-          }}
+          data={chartData}
+          chartSeries={chartSeries}
           width={width}
           height={height}
-          yAxisLabel={yField}
-          xAxisLabel={xField}
-          xAxisFormatter={(d) => {
-            if (count % 5 == 0) {
-              count++
-              if (this.state.xField == 'timestamp') {
-                let date = new Date(d)
-                return `${date.toDateString().slice(4,7)}\n${date.getDate()} ${date.getHours()}`
-              } else {
-                return d
-              }
-            } else {
-              count++
-              return ''
-            }
-          }}
+          x={xFunc}
+          xScale='time'
         />)
     } else {
       return (<div></div>)

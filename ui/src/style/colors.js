@@ -1,4 +1,4 @@
-export {
+module.exports = {
   grey: '#1d1f20',
   blue: '#202229',
   bg: '#C8EAED',
