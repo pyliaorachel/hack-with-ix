@@ -29,13 +29,41 @@ export default class Grid extends Component {
     return (
       <GridLayout className="layout" layout={layout} cols={12} rowHeight={250} width={fullWidth}>
         <div key={'a'}>
-          <ChartWrapper width={chartWidth} chartType="line" dataType="impressions" xField="timestamp" yField="impressions" params={{dc:'NA'}} filter={{range:[0,50]}} interval={1000}/>
+          <ChartWrapper
+            width={chartWidth}
+            chartType="area"
+            dataType="impressions"
+            xField="timestamp"
+            yField="impressions"
+            params={{dc:'NA'}}
+            filter={{range:[0,50]}}
+            interval={1000}
+            group="platform"
+          />
         </div>
         <div key={'b'}>
-          <ChartWrapper width={chartWidth} chartType="bar" dataType="performance" xField="timestamp" yField="lag" params={{dc:'NA', id:'NA0001'}} filter={{range:[0,50]}} interval={1000}/>
+          <ChartWrapper
+            width={chartWidth}
+            chartType="bar"
+            dataType="performance"
+            xField="timestamp"
+            yField="lag"
+            params={{dc:'NA', id:'NA0001'}}
+            filter={{range:[0,50]}}
+            interval={1000}
+          />
         </div>
         <div key={'c'}>
-        <ChartWrapper width={chartWidth} chartType="line" dataType="performance" xField="timestamp" yField="requests" params={{dc:'NA', id:'NA0001'}} filter={{range:[0,50]}} interval={1000}/>
+        <ChartWrapper
+          width={chartWidth}
+          chartType="line"
+          dataType="performance"
+          xField="timestamp"
+          yField="requests"
+          params={{dc:'NA', id:'NA0001'}}
+          filter={{range:[0,50]}}
+          interval={1000}
+        />
         </div>
       </GridLayout>
     )

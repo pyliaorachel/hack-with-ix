@@ -3,17 +3,7 @@
 import React, { Component } from 'react'
 import * as Chart from 'react-d3';
 
-const defaultData = []
-
-const defaultOptions = {
-  animation: false,
-  scaleShowGridLines: false,
-  pointDot: true,
-  pointDotRadius: 1,
-  datasetStroke: true,
-  datasetStrokeWidth: 2,
-  datasetFill: false,
-}
+let count = 0
 
 const styles = {
   wrapperStyle: {
@@ -35,7 +25,7 @@ export default class ChartWrapper extends Component {
     super(props)
 
     this.state = {
-      title: props.title || 'MyChart',
+      title: props.title || `${props.xField}X${props.yField}`,
       width: props.width || 600,
       height: props.height || 250,
       data: null,
@@ -49,9 +39,10 @@ export default class ChartWrapper extends Component {
       params: props.params || null,
       chartType: props.chartType || null,
       filter: props.filter || null,
-      options: props.options || defaultOptions,
       intervalId: null,
       interval: props.interval || 0,
+      group: props.group || null,
+      groups: null,
     }
   }
 
@@ -101,26 +92,31 @@ export default class ChartWrapper extends Component {
   }
 
   updateData(){
-    const allData = this.state.data
+    console.log("Update data ...")
+    const groupData = this.state.groups
     const { xField, yField, filter } = this.state
     let range = this.state.filter.range
 
-    range[0] += 1
-    range[1] += 1
+    range[0] += 5
+    range[1] += 5
 
     filter.range = range
 
-    let values = []
-    for (let i = range[0]; i < range[1]; i++) {
-      let v = {
-        x: allData[i][xField],
-        y: allData[i][yField],
-      }
-      values.push(v)
-    }
-
     let chartArr = this.state[`${xField}_${yField}`]
-    chartArr[0].values = values
+    Object.keys(groupData).forEach((key,i) => {
+      const group = groupData[key]
+
+      let values = []
+      for (let i = range[0]; i < range[1]; i++) {
+        let v = {
+          x: group[i][xField],
+          y: group[i][yField],
+        }
+        values.push(v)
+      }
+      chartArr[i].values = values
+    })
+
     let stateObj = {}
     stateObj[`${xField}_${yField}`] = chartArr
     stateObj.filter = filter
@@ -130,12 +126,31 @@ export default class ChartWrapper extends Component {
   parseData(){
     console.log("Parsing data...")
     const allData = this.state.data
-    const { xField, yField } = this.state
+    const { xField, yField, group } = this.state
 
-    let chartTemplate = [{values:[{x:0,y:0}]}]
+    // form group
+    let allGroups = {}
+    if (group != null) {
+      allData.forEach((item) => {
+        allGroups[item[group]] = (allGroups[item[group]] == null) ? [] : allGroups[item[group]]
+        allGroups[item[group]].push(item)
+      })
+    } else {
+      allGroups[yField] = allData
+    }
+
+    // basic chart template
+    let chartTemplate = []
+    Object.keys(allGroups).forEach((key) => {
+      chartTemplate.push({
+        name: key,
+        values:[{x:0,y:0}]
+      })
+    })
 
     let stateObj = {}
     stateObj[`${xField}_${yField}`] = chartTemplate
+    stateObj.groups = allGroups
     this.setState(stateObj)
 
     this.updateData()
@@ -143,19 +158,33 @@ export default class ChartWrapper extends Component {
 
   getChartComponent() {
     console.log("getChartComponent ...")
-    const { chartType, options, fieldType, width, height, title, xField, yField } = this.state;
+    const { chartType, fieldType, width, height, title, xField, yField, group } = this.state;
 
     if (chartType == 'bar') {
       return (<Chart.BarChart
         data={this.state[fieldType] || [{values:[{x:0,y:0}]}]}
         width={width}
         height={height}
-        title={title}
         yAxisLabel={yField}
         xAxisLabel={xField}
+        xAxisFormatter={(d) => {
+          if (count % 10 == 0) {
+            count++
+            if (this.state.xField == 'timestamp') {
+              let date = new Date(d)
+              return `${date.toDateString().slice(4,7)} ${date.getDate()} ${date.getHours()}`
+            } else {
+              return d
+            }
+          } else {
+            count++
+            return ''
+          }
+        }}
       />)
     } else if (chartType == 'line') {
       return (<Chart.LineChart
+        legend={(group != null)}
         data={this.state[fieldType] || [{values:[{x:0,y:0}]}]}
         viewBoxObject={{
           x: 0,
@@ -165,9 +194,51 @@ export default class ChartWrapper extends Component {
         }}
         width={width}
         height={height}
-        title={title}
         yAxisLabel={yField}
         xAxisLabel={xField}
+        xAxisFormatter={(d) => {
+          if (count % 5 == 0) {
+            count++
+            if (this.state.xField == 'timestamp') {
+              let date = new Date(d)
+              return `${date.toDateString().slice(4,7)}\n${date.getDate()} ${date.getHours()}`
+            } else {
+              return d
+            }
+          } else {
+            count++
+            return ''
+          }
+        }}
+      />)
+    } else if (chartType == 'area') {
+      return (<Chart.AreaChart
+        legend={(group != null)}
+        data={this.state[fieldType] || [{values:[{x:0,y:0}]}]}
+        viewBoxObject={{
+          x: 0,
+          y: 0,
+          width,
+          height,
+        }}
+        width={width}
+        height={height}
+        yAxisLabel={yField}
+        xAxisLabel={xField}
+        xAxisFormatter={(d) => {
+          if (count % 5 == 0) {
+            count++
+            if (this.state.xField == 'timestamp') {
+              let date = new Date(d)
+              return `${date.toDateString().slice(4,7)}\n${date.getDate()} ${date.getHours()}`
+            } else {
+              return d
+            }
+          } else {
+            count++
+            return ''
+          }
+        }}
       />)
     } else {
       return (<div></div>)
