@@ -14,11 +14,13 @@ export default class App extends Component {
   }
 
   render () {
+    const options = {
+        animation: false,
+    }
     return (
       <Center>
         <Col>
-          <Row><ChartWrapper chartType="line" dataType="performance" xField="timestamp" yField="lag" params={{dc:'NA', id:'NA0002'}} filter={{range:[0,100]}} animation={true}/></Row>
-          <Row><ChartWrapper chartType="bar" dataType="performance" xField="timestamp" yField="requests" params={{dc:'NA', id:'NA0002'}} filter={{range:[0,100]}} animation={true}/></Row>
+          <Row><ChartWrapper chartType="line" dataType="impressions" xField="timestamp" yField="impressions" params={{dc:'NA'}} filter={{range:[0,100]}} options={options} interval={1000}/></Row>
         </Col>
       </Center>
     )

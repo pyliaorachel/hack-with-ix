@@ -56,57 +56,72 @@ export default class ChartWrapper extends Component {
       params: props.params || null,
       chartType: props.chartType || null,
       filter: props.filter || null,
-      chartOptions: this.props.chartOptions || defaultOptions,
+      options: props.options || defaultOptions,
+      intervalId: null,
+      interval: props.interval || 0,
     }
   }
 
-  fetchPerformance(dc, id){
-    console.log("Fetching performance ...")
+  componentWillMount() {
+    console.log("componentWillMount ...")
+    const { dataType, params, fieldType } = this.state;
 
-    fetch(`http://localhost:8000/performance?dc=${dc}&id=${id}`)
-      .then(res => res.json())
-      .then(json => {
-        this.setState({ data: json.data})
-        this.parseData(this.state.xField, this.state.yField, this.state.filter)
-      })
-      .catch(err => { console.log('ERROR', err); });
+    this.fetchData(params)
   }
 
-  fetchImpressions(dc){
-    console.log("Fetching impressions ...")
+  componentWillUnmount() {
+    console.log("componentWillUnmount ...")
 
-    fetch(`http://localhost:8000/impressions?dc=${dc}`)
-      .then(res => res.json())
-      .then(json => {
-        this.setState({ data: json.data})
-        this.parseData(this.state.xField, this.state.yField, this.state.filter)
-      })
-      .catch(err => { console.log('ERROR', err); });
+    if (this.state.intervalId) {
+      clearintervalId(this.state.intervalId);
+    }
   }
 
-  updateData(yField, ranges){
-    let data = this.state[yField]
-    if (this.state[yField]) {
-      if (ranges) {
-        let filteredData = this.state[yField].filter((item) => {
-          let isValid = true
-          Object.keys(ranges).forEach((rangeType) => {
-            if (item[rangeType] < ranges[rangeType][0] || item[rangeType] > ranges[rangeType][1]){
-              isValid = false
-              return
-            }
-          })
-          return isValid
-        })
-        data = filteredData
+  fetchData(params){
+    console.log("Fetching data ...", this.state.dataType)
+    const dataType = this.state.dataType
+
+    // parse url
+    let url = `http://localhost:8000/${dataType}?`
+    Object.keys(params).forEach((key) => {
+      url += `${key}=${params[key]}&`
+    })
+
+    console.log(url)
+
+    // fetch
+    fetch(url)
+    .then(res => res.json())
+    .then(json => {
+      this.setState({ data: json.data})
+      this.parseData(this.state.xField, this.state.yField, this.state.filter)
+
+      if (this.state.interval != 0) {
+        const intervalId = setInterval(() => {
+          console.log('setintervalId ...')
+          this.updateData()
+        }, this.state.interval)
+        this.setState({intervalId})
       }
-    }
-    return data
+    })
+    .catch(err => { console.log('ERROR', err); });
+  }
+
+  updateData(){
+    let range = this.state.filter.range
+    let filter = this.state.filter
+
+    range[0] += 1
+    range[1] += 1
+
+    filter.range = range
+    this.setState({filter})
+
+    this.parseData(this.state.xField, this.state.yField, this.state.filter)
   }
 
   parseData(xField, yField, filter){
     console.log("Parsing data...", xField, yField)
-
     const allData = this.state.data
 
     let chartTemplate = {
@@ -160,25 +175,14 @@ export default class ChartWrapper extends Component {
     this.setState(stateObj)
   }
 
-  componentWillMount() {
-    console.log("componentWillMount ...")
-    const { dataType, params, fieldType } = this.state;
-
-    if (dataType == 'performance') {
-      this.fetchPerformance(params.dc, params.id)
-    } else if (dataType == 'impressions') {
-      this.fetchImpressions(params.dc)
-    }
-  }
-
   getChartComponent() {
     console.log("getChartComponent ...")
-    const { chartType, chartOptions, fieldType } = this.state;
+    const { chartType, options, fieldType } = this.state;
 
     if (chartType == 'bar') {
-      return (<Chart.Bar data={this.state[fieldType] || defaultData} options={chartOptions} width="600" height="250"/>)
+      return (<Chart.Bar data={this.state[fieldType] || defaultData} options={options} width="600" height="250"/>)
     } else if (chartType == 'line') {
-      return (<Chart.Line data={this.state[fieldType] || defaultData} options={chartOptions} width="600" height="250"/>)
+      return (<Chart.Line data={this.state[fieldType] || defaultData} options={options} width="600" height="250"/>)
     } else {
       return (<div></div>)
     }
