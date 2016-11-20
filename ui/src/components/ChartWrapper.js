@@ -50,7 +50,9 @@ export default class ChartWrapper extends Component {
       timestamp_requests: null,
       timestamp_mean: null,
       dataType: props.dataType || null,
-      fieldType: props.fieldType || null,
+      xField: props.xField || null,
+      yField: props.yField || null,
+      fieldType: `${props.xField}_${props.yField}`,
       params: props.params || null,
       chartType: props.chartType || null,
       filter: props.filter || null,
@@ -65,9 +67,7 @@ export default class ChartWrapper extends Component {
       .then(res => res.json())
       .then(json => {
         this.setState({ data: json.data})
-        this.parseData('timestamp', 'lag', this.state.filter)
-        this.parseData('timestamp', 'requests', this.state.filter)
-        this.parseData('timestamp', 'mean', this.state.filter)
+        this.parseData(this.state.xField, this.state.yField, this.state.filter)
       })
       .catch(err => { console.log('ERROR', err); });
   }
@@ -79,6 +79,7 @@ export default class ChartWrapper extends Component {
       .then(res => res.json())
       .then(json => {
         this.setState({ data: json.data})
+        this.parseData(this.state.xField, this.state.yField, this.state.filter)
       })
       .catch(err => { console.log('ERROR', err); });
   }
@@ -161,7 +162,7 @@ export default class ChartWrapper extends Component {
 
   componentWillMount() {
     console.log("componentWillMount ...")
-    const { dataType, params } = this.state;
+    const { dataType, params, fieldType } = this.state;
 
     if (dataType == 'performance') {
       this.fetchPerformance(params.dc, params.id)

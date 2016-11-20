@@ -45,8 +45,8 @@ export default class App extends Component {
     return (
       <Center>
         <Col>
-          <Row><ChartWrapper chartType="line" dataType="performance" fieldType="timestamp_lag" params={{dc:'NA', id:'NA0002'}} filter={{range:[0,100]}} animation={true}/></Row>
-          <Row><ChartWrapper chartType="bar" dataType="performance" fieldType="timestamp_requests" params={{dc:'NA', id:'NA0002'}} filter={{range:[0,100]}} animation={true}/></Row>
+          <Row><ChartWrapper chartType="line" dataType="performance" xField="timestamp" yField="lag" params={{dc:'NA', id:'NA0002'}} filter={{range:[0,100]}} animation={true}/></Row>
+          <Row><ChartWrapper chartType="bar" dataType="performance" xField="timestamp" yField="requests" params={{dc:'NA', id:'NA0002'}} filter={{range:[0,100]}} animation={true}/></Row>
         </Col>
       </Center>
     )
