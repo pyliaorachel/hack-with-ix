@@ -18,6 +18,13 @@ const styles = {
     fontFamily: 'Oswald',
     color: Color.title,
     fontSize: 26
+  },
+  subtitleStyle: {
+    display: `flex`,
+    justifyContent: `center`,
+    fontFamily: 'Oswald',
+    color: Color.title,
+    fontSize: 14
   }
 }
 
@@ -25,8 +32,13 @@ export default class ChartWrapper extends Component {
   constructor (props) {
     super(props)
 
+    let title = ''
+    Object.keys(this.props.params).forEach((key) => {
+      title += `${this.props.params[key]} `
+    })
+
     this.state = {
-      title: props.title || `${props.xField} X ${props.yField}`,
+      title: props.title || title,
       width: props.width || 200,
       height: props.height || 200,
       data: null,
@@ -54,12 +66,53 @@ export default class ChartWrapper extends Component {
     this.fetchData(params)
   }
 
+  componentWillReceiveProps(nextProps) {
+    console.log("componentWillReceiveProps ... in ChartWrapper", nextProps)
+    const oldParams = this.state.params
+    const newParams = nextProps.params
+
+    if ((newParams.dataType && this.state.dataType != newParams.dataType)
+      || (newParams.xField && this.state.xField != newParams.xField)
+      || (newParams.yField && this.state.yField != newParams.yField)
+      || (newParams.chartType && this.state.chartType != newParams.chartType)
+      ) {
+      // refresh plot
+      console.log("refresh plot ...")
+      this.setState({params: newParams, dataType: newParams.dataType, xField: newParams.xField, yField: newParams.yField, chartType: newParams.chartType})
+      if (this.state.intervalId) {
+        clearInterval(this.state.intervalId);
+      }
+      this.fetchData(newParams)
+      return
+    }
+    Object.keys(oldParams).forEach((key) => {
+      if (oldParams[key] != newParams[key]){
+        // refresh plot
+        console.log("refresh plot ...")
+        this.setState({params: newParams})
+        if (this.state.intervalId) {
+          clearInterval(this.state.intervalId);
+        }
+        this.fetchData(newParams)
+        return
+      }
+    })
+  }
+
   componentWillUnmount() {
     console.log("componentWillUnmount ...")
 
     if (this.state.intervalId) {
-      clearintervalId(this.state.intervalId);
+      clearInterval(this.state.intervalId);
     }
+  }
+
+  refreshData() {
+    let title = ''
+    Object.keys(this.state.params).forEach((key) => {
+      title += `${this.state.params[key]} `
+    })
+    this.setState({title})
   }
 
   fetchData(params){
@@ -87,6 +140,7 @@ export default class ChartWrapper extends Component {
           this.updateData()
         }, this.state.interval)
         this.setState({intervalId})
+        this.refreshData()
       }
     })
     .catch(err => { console.log('ERROR', err); });
@@ -176,7 +230,7 @@ export default class ChartWrapper extends Component {
   }
 
   getChartComponent() {
-    console.log("getChartComponent ...", this.state.chartSeries)
+    //console.log("getChartComponent ...", this.state.chartSeries)
     const { chartType, chartData, chartSeries, width, height, title, xField, yField, group, xFunc } = this.state;
     const xScale = (xField == 'timestamp') ? 'time' : 'linear'
 
@@ -235,9 +289,11 @@ export default class ChartWrapper extends Component {
   }
 
   render () {
+
     return (
       <div style={styles.wrapperStyle}>
         <h1 style={styles.titleStyle}>{this.state.title}</h1>
+        <span style={styles.subtitleStyle}>{`${this.state.xField} X ${this.state.yField}`}</span>
         {this.getChartComponent()}
       </div>
     )

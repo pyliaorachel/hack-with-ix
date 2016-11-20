@@ -8,17 +8,12 @@ import GridLayout from 'react-grid-layout'
 import { Center, Col, Row } from 'components/Flex'
 import ChartWrapper from 'components/ChartWrapper'
 
+const defaultParams = { dc:'NA', id:'NA0003' }
 
 export default class Grid extends Component {
-  constructor () {
-    super()
+  constructor (props) {
+    super(props)
 
-    this.state = {
-      fullWidth: document.documentElement.clientWidth,
-    }
-  }
-
-  render () {
     const layout = [
       {i: 'a', x: 0, y: 0, w: 3, h: 1},
       {i: 'b', x: 3, y: 0, w: 3, h: 1},
@@ -30,10 +25,53 @@ export default class Grid extends Component {
       {i: 'h', x: 0, y: 2, w: 3, h: 1},
       {i: 'i', x: 9, y: 2, w: 3, h: 1},
     ]
-    const { fullWidth } = this.state
-    const chartWidth = fullWidth/4-16
+
+    this.state = {
+      fullWidth: document.documentElement.clientWidth,
+      chartProperties: props.chartProperties,
+      layout,
+      chartWidth: document.documentElement.clientWidth/4-16,
+      interval: 1000,
+    }
+  }
+
+  componentWillReceiveProps(nextProps) {
+    console.log("componentWillReceiveProps ...", nextProps)
+    this.setState({chartProperties: nextProps.chartProperties})
+  }
+
+  getMainChart() {
+    const { chartWidth, chartProperties } = this.state
+
+    let params = null
+    if (chartProperties) {
+      params = {
+        ...chartProperties,
+        dc: chartProperties.area,
+        id: chartProperties.server,
+        dataType: chartProperties.dataType,
+      }
+    }
+
     return (
-      <GridLayout className="layout" layout={layout} cols={12} rowHeight={300} width={fullWidth}>
+      <ChartWrapper
+        width={chartWidth*2}
+        height={527}
+        chartType="line"
+        dataType="performance"
+        xField="timestamp"
+        yField="requests"
+        params={params || defaultParams}
+        filter={{range:[0,40]}}
+        interval={this.state.interval}
+      />
+    )
+  }
+
+  render () {
+    const { fullWidth, chartWidth, layout, interval } = this.state
+    return (
+      <GridLayout className="layout" layout={layout} cols={12} rowHeight={320} width={fullWidth}>
         <div key={'a'}>
           <ChartWrapper
             width={chartWidth}
@@ -43,7 +81,7 @@ export default class Grid extends Component {
             yField="impressions"
             params={{dc:'EU'}}
             filter={{range:[0,40]}}
-            interval={700}
+            interval={interval}
             group="platform"
           />
         </div>
@@ -56,7 +94,7 @@ export default class Grid extends Component {
             yField="lag"
             params={{dc:'EU', id:'EU0004'}}
             filter={{range:[0,40]}}
-            interval={700}
+            interval={interval}
           />
         </div>
         <div key={'c'}>
@@ -68,7 +106,7 @@ export default class Grid extends Component {
             yField="requests"
             params={{dc:'AS', id:'AS0002'}}
             filter={{range:[0,40]}}
-            interval={700}
+            interval={interval}
           />
         </div>
         <div key={'d'}>
@@ -80,7 +118,7 @@ export default class Grid extends Component {
             yField="impressions"
             params={{dc:'NA'}}
             filter={{range:[0,40]}}
-            interval={700}
+            interval={interval}
             group="platform"
           />
         </div>
@@ -93,21 +131,13 @@ export default class Grid extends Component {
             yField="lag"
             params={{dc:'AS', id:'AS0001'}}
             filter={{range:[0,40]}}
-            interval={700}
+            interval={interval}
           />
         </div>
         <div key={'f'}>
-          <ChartWrapper
-            width={chartWidth*2}
-            height={510}
-            chartType="line"
-            dataType="performance"
-            xField="timestamp"
-            yField="requests"
-            params={{dc:'NA', id:'NA0003'}}
-            filter={{range:[0,40]}}
-            interval={700}
-          />
+          {
+            this.getMainChart()
+          }
         </div>
         <div key={'g'}>
           <ChartWrapper
@@ -118,7 +148,7 @@ export default class Grid extends Component {
             yField="impressions"
             params={{dc:'AS'}}
             filter={{range:[0,40]}}
-            interval={700}
+            interval={interval}
             group="platform"
           />
         </div>
@@ -131,7 +161,7 @@ export default class Grid extends Component {
             yField="requests"
             params={{dc:'NA', id:'NA0001'}}
             filter={{range:[0,40]}}
-            interval={700}
+            interval={interval}
           />
         </div>
         <div key={'i'}>
@@ -143,7 +173,7 @@ export default class Grid extends Component {
             yField="impressions"
             params={{dc:'EU'}}
             filter={{range:[0,40]}}
-            interval={700}
+            interval={interval}
             group="platform"
           />
         </div>

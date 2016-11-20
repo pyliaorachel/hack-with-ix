@@ -20,6 +20,12 @@ class NavBar extends Component {
       server: null,
       dataTypes: ['performance', 'impressions'],
       dataType: 'performance',
+      xFields: ['timestamp'],
+      xField: 'timestamp',
+      yFields: ['impressions', 'spend', 'requests', 'lag', 'warn'],
+      yField: 'lag',
+      chartTypes: ['line', 'area', 'bar'],
+      chartType: 'line',
     }
   }
 
@@ -43,7 +49,7 @@ class NavBar extends Component {
       })
 
       this.setState({ areas: Object.keys(areas), area: serverObjs[0].dc, serverObjs, servers, server: servers[0]})
-      this.props.plot({server: servers[0], area: serverObjs[0].dc, dataType: this.state.dataType})
+      this.props.plot({server: servers[0], area: serverObjs[0].dc, dataType: this.state.dataType, xField: this.state.xField, yField: this.state.yField, chartType: this.state.chartType})
     })
     .catch(err => { console.log('ERROR', err); });
   }
@@ -76,21 +82,24 @@ class NavBar extends Component {
   }
 
   render() {
-    const { server, area, dataType } = this.state
+    const { server, area, dataType, xField, yField, chartType } = this.state
     return (
       <Navbar>
         <Navbar.Header>
           <Navbar.Brand>
-            <a href="#">Board</a>
+            <a href="#">UBoard</a>
           </Navbar.Brand>
         </Navbar.Header>
         <Nav>
           {this.getDropdown('area', `Area ${area}`, "area-dropdown")}
           {this.getDropdown('server', `Server ${server}`, "server-dropdown")}
           {this.getDropdown('dataType', `Data Type ${dataType}`, "data-type-dropdown")}
+          {this.getDropdown('xField', `x-Axis ${xField}`, "x-field-dropdown")}
+          {this.getDropdown('yField', `y-Axis ${yField}`, "y-field-dropdown")}
+          {this.getDropdown('chartType', `Chart Type ${chartType}`, "chart-type-dropdown")}
           <NavItem
             onClick={() => {
-              this.props.plot({server, area, dataType})
+              this.props.plot({server, area, dataType, xField, yField, chartType})
             }}
           >
             <p style={{margin: 0, color: '#FFC107', fontSize: '24'}}>Plot!</p>

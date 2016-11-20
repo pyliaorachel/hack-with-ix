@@ -27,7 +27,7 @@ export default class App extends Component {
     return (
       <div style={{width: this.state.fullWidth}}>
         <ControlPanel plot={(params) => this.plot(params)}/>
-        <Grid />
+        <Grid chartProperties={this.state.chartProperties}/>
       </div>
     )
   }
