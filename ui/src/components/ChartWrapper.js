@@ -46,9 +46,14 @@ export default class ChartWrapper extends Component {
 
     this.state = {
       data: [],
-      lag: null,
-      requests: null,
-      mean: null,
+      timestamp_lag: null,
+      timestamp_requests: null,
+      timestamp_mean: null,
+      dataType: props.dataType || null,
+      fieldType: props.fieldType || null,
+      params: props.params || null,
+      chartType: props.chartType || null,
+      filter: props.filter || null,
       chartOptions: this.props.chartOptions || defaultOptions,
     }
   }
@@ -60,9 +65,9 @@ export default class ChartWrapper extends Component {
       .then(res => res.json())
       .then(json => {
         this.setState({ data: json.data})
-        this.parseData('timestamp', 'lag', [0, 100])
-        this.parseData('timestamp', 'requests', [0, 100])
-        this.parseData('timestamp', 'mean', [0, 100])
+        this.parseData('timestamp', 'lag', this.state.filter)
+        this.parseData('timestamp', 'requests', this.state.filter)
+        this.parseData('timestamp', 'mean', this.state.filter)
       })
       .catch(err => { console.log('ERROR', err); });
   }
@@ -78,13 +83,7 @@ export default class ChartWrapper extends Component {
       .catch(err => { console.log('ERROR', err); });
   }
 
-  filterData(yField, ranges){
-    /*  ranges = {
-          timestamp: [12345, 23456],
-          lag: [0, 100000],
-          ...
-        }
-    */
+  updateData(yField, ranges){
     let data = this.state[yField]
     if (this.state[yField]) {
       if (ranges) {
@@ -104,17 +103,16 @@ export default class ChartWrapper extends Component {
     return data
   }
 
-  parseData(xField, yField){
-    console.log("Parsing ...", xField, yField)
+  parseData(xField, yField, filter){
+    console.log("Parsing data...", xField, yField)
 
     const allData = this.state.data
-    const filter = this.props.filter
 
     let chartTemplate = {
       labels: [""],
       datasets: [
         {
-          label: `${xField}x${yField}`,
+          label: `${xField}_${yField}`,
           fill: false,
           lineTension: 0.1,
           backgroundColor: "rgba(75,192,192,0.4)",
@@ -132,7 +130,7 @@ export default class ChartWrapper extends Component {
           pointHoverBorderWidth: 2,
           pointRadius: 1,
           pointHitRadius: 10,
-          data: [65, 160, 80, 81, 56, 55, 40],
+          data: [],
           spanGaps: false,
         }
       ]
@@ -157,24 +155,29 @@ export default class ChartWrapper extends Component {
     chartTemplate.labels = labels
 
     let stateObj = {}
-    stateObj[yField] = chartTemplate
+    stateObj[`${xField}_${yField}`] = chartTemplate
     this.setState(stateObj)
   }
 
   componentWillMount() {
     console.log("componentWillMount ...")
-    this.fetchPerformance('NA','NA0002')
+    const { dataType, params } = this.state;
+
+    if (dataType == 'performance') {
+      this.fetchPerformance(params.dc, params.id)
+    } else if (dataType == 'impressions') {
+      this.fetchImpressions(params.dc)
+    }
   }
 
   getChartComponent() {
-    console.log("getChartComponent ...", this.props.chartType)
+    console.log("getChartComponent ...")
+    const { chartType, chartOptions, fieldType } = this.state;
 
-    const chartOptions = this.state.chartOptions
-    const chartType = this.props.chartType
     if (chartType == 'bar') {
-      return (<Chart.Bar data={this.state[this.props.dataType] || defaultData} options={this.state.chartOptions} width="600" height="250"/>)
+      return (<Chart.Bar data={this.state[fieldType] || defaultData} options={chartOptions} width="600" height="250"/>)
     } else if (chartType == 'line') {
-      return (<Chart.Line data={this.state[this.props.dataType] || defaultData} options={this.state.chartOptions} width="600" height="250"/>)
+      return (<Chart.Line data={this.state[fieldType] || defaultData} options={chartOptions} width="600" height="250"/>)
     } else {
       return (<div></div>)
     }
