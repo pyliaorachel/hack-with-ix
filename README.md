@@ -36,4 +36,4 @@ Then open your browser and go to `localhost:3000`
 
 # Demo
 
-![demo](https://github.com/pyliaorachel/hack-with-ix/tree/demo/demo.gif)
+![demo](https://github.com/pyliaorachel/hack-with-ix/blob/demo/demo.gif)
